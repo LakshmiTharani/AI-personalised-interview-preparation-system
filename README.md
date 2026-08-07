@@ -1,175 +1,22 @@
 AI Personalized Interview Agent
+This README documents the multi-agent workflow that powers the AI Interview Intelligence Coach — how a request moves through the system, who handles it at each step, and how the system personalizes future sessions.
 
-An AI-powered interview coaching system that conducts personalized mock interviews, evaluates candidate responses, and provides intelligent feedback using a multi-agent architecture.
+## ARCHITECTURE
 
-The project simulates a real interview experience by combining multiple specialized AI agents that collaborate through a handoff mechanism to generate personalized questions, evaluate answers, and provide actionable insights for interview preparation.
+1. Entry — a request comes in through the FastAPI gateway and is handed to the Supervisor Agent.
+2. Routing — the Supervisor reads the current session state and decides which Coordinator should handle it:
+          Profile Coordinator — resume upload, company/JD research
+          Interview Coordinator — live mock interview (questions, coding, voice, vision, emotion)
+          Learning Coordinator — plan generation, progress dashboard
+3. Coordinator dispatch — the chosen Coordinator calls its own sub-agents:
+          Profile: Resume Agent → Company Research Agent
+          Interview: Question Generator, Coding Interview Agent, Voice Analysis Agent, Vision Analysis Agent, Emotion Detection Agent all run and feed into a shared Evaluation Agent, which passes its scoring to the Feedback Agent
+          Learning: Learning Planner Agent, Dashboard Agent — the Planner reads the latest Feedback Agent output ("weak topics inform next plan")
+4. Memory write — every agent that produces a durable result (Resume Agent, Company Research Agent, Feedback Agent, Planner Agent, Dashboard Agent) writes to the Memory Agent, which persists to PostgreSQL (structured history) and ChromaDB (embeddings for RAG).
+5. Digital Twin update — the Memory Agent's accumulated history is distilled into the Digital Twin (confidence, coding style, weak/strong topics, preferred difficulty, learning speed).
+6. Personalization loop — the Digital Twin feeds back into the Supervisor Agent, so routing, question difficulty, and plan generation on the next session are shaped by everything learned so far.
 
-Features
-
-- Personalized interview experience
-- Multi-Agent AI Architecture
-- Agent Handoff Mechanism
-- Real-time interview simulation
-- AI-powered answer evaluation
-- Performance scoring
-- Personalized improvement suggestions
-- Automatic interview report generation
-- Modular and scalable workflow
-
-System Architecture
-
-The application follows a Multi-Agent Architecture, where every agent has a dedicated responsibility.
-
-### Main Interview Agent
-- Coordinates the entire interview process
-- Maintains interview flow
-- Routes tasks to specialized agents
-
-### Skill Detection Agent
-- Identifies candidate skills
-- Selects appropriate interview domain
-- Personalizes interview questions
-
-### Question Generation Agent
-- Generates technical and behavioral questions
-- Adjusts difficulty based on candidate profile
-
-### Evaluation Agent
-- Evaluates candidate responses
-- Scores answers using predefined criteria
-- Measures communication and technical quality
-
-### Feedback Agent
-- Provides strengths and weaknesses
-- Suggests areas for improvement
-- Generates actionable recommendations
-
-### Report Generation Agent
-- Creates a complete interview summary
-- Displays scores and detailed feedback
-- Generates the final interview report
-
-## Agent Handoff Workflow
-
-The project uses an intelligent handoff mechanism between agents.
-
-Candidate Information
-        │
-        ▼
-Main Interview Agent
-        │
-        ▼
-Skill Detection Agent
-        │
-        ▼
-Question Generation Agent
-        │
-        ▼
-Candidate Response
-        │
-        ▼
-Evaluation Agent
-        │
-        ▼
-Feedback Agent
-        │
-        ▼
-Report Generation Agent
-        │
-        ▼
-Final Interview Report
-
-Each agent completes its specialized task and hands control to the next agent, creating a seamless interview experience.
-
-## Technologies Used
-
-- Python
-- OpenAI API
-- Multi-Agent AI Framework
-- Prompt Engineering
-- LLM-based Evaluation
-- Agent Orchestration
-- JSON
-- REST APIs
-
-## Project Structure
-
-AI-Personalized-Interview-Agent/
-│
-├── agents/
-│   ├── interview_agent.py
-│   ├── skill_agent.py
-│   ├── question_agent.py
-│   ├── evaluation_agent.py
-│   ├── feedback_agent.py
-│   └── report_agent.py
-│
-├── prompts/
-│
-├── utils/
-│
-├── reports/
-│
-├── app.py
-│
-├── requirements.txt
-│
-└── README.md
-
-## Installation
-
-Clone the repository
-
-```bash
-git clone https://github.com/your-username/AI-Personalized-Interview-Agent.git
-```
-
-Move into the project
-
-```bash
-cd AI-Personalized-Interview-Agent
-```
-
-Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-Add your OpenAI API key
-
-```bash
-OPENAI_API_KEY=your_api_key
-```
-
-Run the project
-
-```bash
-python app.py
-```
-## Workflow
-
-1. User starts the interview.
-2. Candidate information is collected.
-3. Skills are identified.
-4. Questions are generated.
-5. Candidate answers each question.
-6. AI evaluates responses.
-7. Feedback is generated.
-8. Performance report is created.
-
-## Future Improvements
-
-- Voice-based interview support
-- Resume parsing
-- Video interview analysis
-- Emotion detection
-- Adaptive difficulty levels
-- Company-specific interview modes
-- Dashboard analytics
-- Interview history tracking
-
-## Author
-
-Lakshmi Tharani M S
-If you found this project useful, feel free to STAR the repository.
+## Why this FLOW
+Supervisor + Coordinators + sub-agents keeps each agent single-purpose and testable in isolation, instead of one monolithic prompt trying to do everything.
+Shared Memory Agent means every coordinator writes to the same place, so the Digital Twin always has a complete picture rather than fragmented, coordinator-specific memory.
+Feedback loop into the Supervisor is what makes the system stateful across sessions — without it, this would just be a stateless quiz flow.
