@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Interview Coach - Professional Interview Preparation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">🎯</div>
+                    <div>
+                        <h1>AI Interview Coach</h1>
+                        <p class="tagline">Professional Interview Preparation with AI Agents</p>
+                    </div>
+                </div>
+                <div class="header-status">
+                    <span class="status-indicator online"></span>
+                    <span class="status-text">System Ready</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Step 1: Upload & Setup -->
+            <section id="step-setup" class="step-section active">
+                <div class="section-header">
+                    <div class="step-number">1</div>
+                    <div>
+                        <h2>Setup Your Interview</h2>
+                        <p>Upload your resume and provide the job description</p>
+                    </div>
+                </div>
+
+                <div class="setup-grid">
+                    <!-- Resume Upload -->
+                    <div class="upload-card">
+                        <div class="card-header">
+                            <h3>📄 Resume</h3>
+                            <span class="file-types">PDF, DOCX, TXT</span>
+                        </div>
+                        <div class="upload-area" id="resume-upload">
+                            <input type="file" id="resume-file" accept=".pdf,.docx,.txt" style="display: none;">
+                            <div class="upload-placeholder" onclick="document.getElementById('resume-file').click()">
+                                <div class="upload-icon">📁</div>
+                                <p>Click to upload or drag and drop</p>
+                                <p class="upload-hint">Maximum file size: 16MB</p>
+                            </div>
+                            <div class="upload-success" style="display: none;">
+                                <div class="success-icon">✓</div>
+                                <p id="uploaded-filename">resume.pdf</p>
+                                <button class="btn-remove" onclick="removeResume()">Remove</button>
+                            </div>
+                        </div>
+                        <div class="manual-input">
+                            <p>Or paste resume text:</p>
+                            <textarea id="resume-text" rows="6" placeholder="Paste your resume content here..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Job Description -->
+                    <div class="job-card">
+                        <div class="card-header">
+                            <h3>💼 Job Description</h3>
+                        </div>
+                        <textarea id="job-description" rows="12" placeholder="Paste the job description here..."></textarea>
+                    </div>
+                </div>
+
+                <div class="action-bar">
+                    <button class="btn-primary btn-large" onclick="analyzeResume()">
+                        <span class="btn-text">Analyze Resume</span>
+                        <span class="btn-loading" style="display: none;">Analyzing...</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Step 2: Resume Analysis -->
+            <section id="step-analysis" class="step-section">
+                <div class="section-header">
+                    <div class="step-number">2</div>
+                    <div>
+                        <h2>Resume Analysis</h2>
+                        <p>AI-powered analysis of your resume against the job requirements</p>
+                    </div>
+                </div>
+
+                <div class="analysis-content" id="resume-analysis-content">
+                    <div class="loading-state">
+                        <div class="spinner"></div>
+                        <p>Analyzing your resume...</p>
+                    </div>
+                </div>
+
+                <div class="action-bar" id="analysis-actions" style="display: none;">
+                    <button class="btn-secondary" onclick="goToStep('setup')">← Back</button>
+                    <button class="btn-primary" onclick="generateQuestions()">Generate Questions →</button>
+                </div>
+            </section>
+
+            <!-- Step 3: Interview Mode Selection -->
+            <section id="step-mode" class="step-section">
+                <div class="section-header">
+                    <div class="step-number">3</div>
+                    <div>
+                        <h2>Choose Interview Mode</h2>
+                        <p>Select how you'd like to conduct your practice interview</p>
+                    </div>
+                </div>
+
+                <div class="mode-selection">
+                    <div class="mode-card" onclick="selectMode('video')">
+                        <div class="mode-icon">🎥</div>
+                        <h3>Video Interview</h3>
+                        <p>Practice with webcam recording. Get feedback on your presentation and communication skills.</p>
+                        <div class="mode-features">
+                            <span>✓ Webcam recording</span>
+                            <span>✓ Speech analysis</span>
+                            <span>✓ Body language tips</span>
+                        </div>
+                    </div>
+
+                    <div class="mode-card" onclick="selectMode('typing')">
+                        <div class="mode-icon">⌨️</div>
+                        <h3>Typing Interview</h3>
+                        <p>Type your responses to interview questions. Focus on content and structure.</p>
+                        <div class="mode-features">
+                            <span>✓ Text-based responses</span>
+                            <span>✓ Content analysis</span>
+                            <span>✓ Structure feedback</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-bar">
+                    <button class="btn-secondary" onclick="goToStep('analysis')">← Back</button>
+                </div>
+            </section>
+
+            <!-- Step 4: Interview Session -->
+            <section id="step-interview" class="step-section">
+                <div class="section-header">
+                    <div class="step-number">4</div>
+                    <div>
+                        <h2>Interview Session</h2>
+                        <p>Answer personalized questions generated based on your profile</p>
+                    </div>
+                </div>
+
+                <div class="interview-container">
+                    <!-- Video Mode -->
+                    <div id="video-interview" class="interview-mode" style="display: none;">
+                        <div class="video-area">
+                            <video id="webcam" autoplay playsinline></video>
+                            <div class="video-overlay">
+                                <div class="recording-indicator" style="display: none;">
+                                    <span class="recording-dot"></span>
+                                    <span>Recording</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="question-display">
+                            <div class="question-number">Question <span id="current-q-num">1</span> of <span id="total-q-num">5</span></div>
+                            <div class="question-text" id="video-question-text"></div>
+                        </div>
+                        <div class="video-controls">
+                            <button class="btn-record" id="btn-record" onclick="toggleRecording()">
+                                <span class="record-icon">●</span>
+                                <span class="record-text">Start Recording</span>
+                            </button>
+                            <button class="btn-stop" id="btn-stop" onclick="stopRecording()" style="display: none;">Stop Recording</button>
+                            <button class="btn-next" id="btn-next-video" onclick="nextQuestion()" style="display: none;">Next Question →</button>
+                        </div>
+                    </div>
+
+                    <!-- Typing Mode -->
+                    <div id="typing-interview" class="interview-mode" style="display: none;">
+                        <div class="typing-area">
+                            <div class="question-display">
+                                <div class="question-number">Question <span id="current-q-num-type">1</span> of <span id="total-q-num-type">5</span></div>
+                                <div class="question-text" id="typing-question-text"></div>
+                            </div>
+                            <div class="response-area">
+                                <textarea id="typing-response" rows="8" placeholder="Type your response here..."></textarea>
+                                <div class="typing-controls">
+                                    <button class="btn-submit" onclick="submitTypingResponse()">Submit Response</button>
+                                    <button class="btn-next" id="btn-next-type" onclick="nextQuestion()" style="display: none;">Next Question →</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-bar">
+                    <button class="btn-secondary" onclick="goToStep('mode')">← Back</button>
+                    <button class="btn-primary" onclick="finishInterview()" id="btn-finish" style="display: none;">Finish Interview →</button>
+                </div>
+            </section>
+
+            <!-- Step 5: Results -->
+            <section id="step-results" class="step-section">
+                <div class="section-header">
+                    <div class="step-number">5</div>
+                    <div>
+                        <h2>Interview Results</h2>
+                        <p>Comprehensive analysis and personalized feedback</p>
+                    </div>
+                </div>
+
+                <div class="results-tabs">
+                    <button class="result-tab active" onclick="showResultTab('feedback')">Overall Feedback</button>
+                    <button class="result-tab" onclick="showResultTab('detailed')">Detailed Analysis</button>
+                    <button class="result-tab" onclick="showResultTab('next-steps')">Next Steps</button>
+                </div>
+
+                <div class="results-content">
+                    <div id="feedback-tab" class="result-tab-content active">
+                        <div class="feedback-summary" id="final-feedback-content">
+                            <div class="loading-state">
+                                <div class="spinner"></div>
+                                <p>Generating comprehensive analysis...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="detailed-tab" class="result-tab-content">
+                        <div class="detailed-analysis" id="detailed-analysis-content">
+                            <!-- Detailed analysis will be populated here -->
+                        </div>
+                    </div>
+
+                    <div id="next-steps-tab" class="result-tab-content">
+                        <div class="next-steps" id="next-steps-content">
+                            <!-- Next steps will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-bar">
+                    <button class="btn-primary" onclick="startNewInterview()">Start New Interview</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="error-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Error</h3>
+                <button class="modal-close" onclick="closeError()">×</button>
+            </div>
+            <div class="modal-body">
+                <p id="error-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" onclick="closeError()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let currentState = {
+            resumeText: '',
+            jobDescription: '',
+            resumeAnalysis: '',
+            questions: [],
+            currentQuestionIndex: 0,
+            interviewMode: null,
+            responses: [],
+            interviewTranscript: ''
+        };
+
+        // File upload handling
+        document.getElementById('resume-file').addEventListener('change', handleFileUpload);
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('resume', file);
+
+            fetch('/upload-resume', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentState.resumeText = data.resume_text;
+                    document.getElementById('resume-text').value = data.resume_text;
+                    document.querySelector('.upload-placeholder').style.display = 'none';
+                    document.querySelector('.upload-success').style.display = 'block';
+                    document.getElementById('uploaded-filename').textContent = file.name;
+                } else {
+                    showError(data.error);
+                }
+            })
+            .catch(error => showError('File upload failed: ' + error.message));
+        }
+
+        function removeResume() {
+            currentState.resumeText = '';
+            document.getElementById('resume-text').value = '';
+            document.getElementById('resume-file').value = '';
+            document.querySelector('.upload-placeholder').style.display = 'block';
+            document.querySelector('.upload-success').style.display = 'none';
+        }
+
+        // Step navigation
+        function goToStep(stepId) {
+            document.querySelectorAll('.step-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById('step-' + stepId).classList.add('active');
+        }
+
+        // Resume analysis
+        async function analyzeResume() {
+            const resumeText = document.getElementById('resume-text').value;
+            const jobDescription = document.getElementById('job-description').value;
+
+            if (!resumeText.trim() || !jobDescription.trim()) {
+                showError('Please provide both resume and job description.');
+                return;
+            }
+
+            currentState.resumeText = resumeText;
+            currentState.jobDescription = jobDescription;
+
+            goToStep('analysis');
+
+            try {
+                const response = await fetch('/analyze-resume', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        resume_text: resumeText,
+                        job_description: jobDescription
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentState.resumeAnalysis = data.resume_analysis;
+                    document.getElementById('resume-analysis-content').innerHTML = formatMarkdown(data.resume_analysis);
+                    document.getElementById('analysis-actions').style.display = 'flex';
+                } else {
+                    showError(data.error);
+                    goToStep('setup');
+                }
+            } catch (error) {
+                showError('Analysis failed: ' + error.message);
+                goToStep('setup');
+            }
+        }
+
+        // Generate questions
+        async function generateQuestions() {
+            try {
+                const response = await fetch('/generate-questions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        resume_analysis: currentState.resumeAnalysis,
+                        job_description: currentState.jobDescription
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentState.questions = parseQuestions(data.questions);
+                    goToStep('mode');
+                } else {
+                    showError(data.error);
+                }
+            } catch (error) {
+                showError('Question generation failed: ' + error.message);
+            }
+        }
+
+        function parseQuestions(questionsText) {
+            // Parse questions from the generated text
+            const lines = questionsText.split('\n');
+            const questions = [];
+            let currentQuestion = '';
+
+            for (const line of lines) {
+                if (line.match(/^\d+\./) || line.match(/^•/)) {
+                    if (currentQuestion) questions.push(currentQuestion.trim());
+                    currentQuestion = line;
+                } else if (currentQuestion) {
+                    currentQuestion += ' ' + line;
+                }
+            }
+            if (currentQuestion) questions.push(currentQuestion.trim());
+
+            return questions.slice(0, 5); // Limit to 5 questions
+        }
+
+        // Mode selection
+        function selectMode(mode) {
+            currentState.interviewMode = mode;
+            currentState.currentQuestionIndex = 0;
+            currentState.responses = [];
+
+            if (mode === 'video') {
+                document.getElementById('video-interview').style.display = 'block';
+                document.getElementById('typing-interview').style.display = 'none';
+                startWebcam();
+            } else {
+                document.getElementById('video-interview').style.display = 'none';
+                document.getElementById('typing-interview').style.display = 'block';
+            }
+
+            displayCurrentQuestion();
+            goToStep('interview');
+        }
+
+        function displayCurrentQuestion() {
+            const question = currentState.questions[currentState.currentQuestionIndex];
+            
+            if (currentState.interviewMode === 'video') {
+                document.getElementById('video-question-text').textContent = question;
+                document.getElementById('current-q-num').textContent = currentState.currentQuestionIndex + 1;
+                document.getElementById('total-q-num').textContent = currentState.questions.length;
+            } else {
+                document.getElementById('typing-question-text').textContent = question;
+                document.getElementById('current-q-num-type').textContent = currentState.currentQuestionIndex + 1;
+                document.getElementById('total-q-num-type').textContent = currentState.questions.length;
+                document.getElementById('typing-response').value = '';
+            }
+        }
+
+        // Webcam handling
+        async function startWebcam() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                document.getElementById('webcam').srcObject = stream;
+            } catch (error) {
+                showError('Could not access webcam: ' + error.message);
+            }
+        }
+
+        let mediaRecorder;
+        let recordedChunks = [];
+
+        function toggleRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }
+
+        function startRecording() {
+            const stream = document.getElementById('webcam').srcObject;
+            mediaRecorder = new MediaRecorder(stream);
+            recordedChunks = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                // In a real app, you'd send this to a speech-to-text service
+                // For now, we'll use a placeholder
+                currentState.responses.push({
+                    question: currentState.questions[currentState.currentQuestionIndex],
+                    response: "[Video response - would be transcribed in production]",
+                    mode: 'video'
+                });
+
+                document.getElementById('btn-record').style.display = 'none';
+                document.getElementById('btn-stop').style.display = 'none';
+                document.getElementById('btn-next-video').style.display = 'inline-block';
+                document.querySelector('.recording-indicator').style.display = 'none';
+            };
+
+            mediaRecorder.start();
+            document.getElementById('btn-record').style.display = 'none';
+            document.getElementById('btn-stop').style.display = 'inline-block';
+            document.querySelector('.recording-indicator').style.display = 'flex';
+        }
+
+        function stopRecording() {
+            if (mediaRecorder) {
+                mediaRecorder.stop();
+            }
+        }
+
+        // Typing mode
+        async function submitTypingResponse() {
+            const response = document.getElementById('typing-response').value;
+            if (!response.trim()) {
+                showError('Please provide a response.');
+                return;
+            }
+
+            currentState.responses.push({
+                question: currentState.questions[currentState.currentQuestionIndex],
+                response: response,
+                mode: 'typing'
+            });
+
+            document.getElementById('btn-submit').style.display = 'none';
+            document.getElementById('btn-next-type').style.display = 'inline-block';
+        }
+
+        // Navigation
+        async function nextQuestion() {
+            currentState.currentQuestionIndex++;
+
+            if (currentState.currentQuestionIndex < currentState.questions.length) {
+                displayCurrentQuestion();
+                
+                // Reset UI for next question
+                if (currentState.interviewMode === 'video') {
+                    document.getElementById('btn-record').style.display = 'inline-block';
+                    document.getElementById('btn-stop').style.display = 'none';
+                    document.getElementById('btn-next-video').style.display = 'none';
+                } else {
+                    document.getElementById('btn-submit').style.display = 'inline-block';
+                    document.getElementById('btn-next-type').style.display = 'none';
+                }
+            } else {
+                document.getElementById('btn-finish').style.display = 'inline-block';
+                if (currentState.interviewMode === 'video') {
+                    document.getElementById('btn-next-video').style.display = 'none';
+                } else {
+                    document.getElementById('btn-next-type').style.display = 'none';
+                }
+            }
+        }
+
+        async function finishInterview() {
+            goToStep('results');
+            await generateFinalAnalysis();
+        }
+
+        async function generateFinalAnalysis() {
+            // Build transcript
+            currentState.interviewTranscript = currentState.responses.map((r, i) => 
+                `Question ${i + 1}: ${r.question}\nResponse: ${r.response}`
+            ).join('\n\n');
+
+            try {
+                const response = await fetch('/final-analysis', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        resume_analysis: currentState.resumeAnalysis,
+                        interview_transcript: currentState.interviewTranscript
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('final-feedback-content').innerHTML = formatMarkdown(data.final_feedback);
+                    
+                    // Parse and populate other tabs
+                    populateDetailedTabs(data.final_feedback);
+                } else {
+                    showError(data.error);
+                }
+            } catch (error) {
+                showError('Final analysis failed: ' + error.message);
+            }
+        }
+
+        function populateDetailedTabs(feedback) {
+            // Parse feedback to extract different sections
+            document.getElementById('detailed-analysis-content').innerHTML = formatMarkdown(feedback);
+            document.getElementById('next-steps-content').innerHTML = formatMarkdown(feedback);
+        }
+
+        function showResultTab(tabName) {
+            document.querySelectorAll('.result-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.result-tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+
+        function startNewInterview() {
+            // Reset state
+            currentState = {
+                resumeText: '',
+                jobDescription: '',
+                resumeAnalysis: '',
+                questions: [],
+                currentQuestionIndex: 0,
+                interviewMode: null,
+                responses: [],
+                interviewTranscript: ''
+            };
+
+            // Reset UI
+            document.getElementById('resume-text').value = '';
+            document.getElementById('job-description').value = '';
+            removeResume();
+            document.getElementById('analysis-actions').style.display = 'none';
+            document.getElementById('resume-analysis-content').innerHTML = `
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Analyzing your resume...</p>
+                </div>
+            `;
+
+            goToStep('setup');
+        }
+
+        // Utility functions
+        function formatMarkdown(text) {
+            if (!text) return '<p>No content available</p>';
+            
+            let html = text
+                .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/^- (.*$)/gim, '<li>$1</li>')
+                .replace(/^(\d+)\. (.*$)/gim, '<li>$2</li>')
+                .replace(/\n/g, '<br>');
+            
+            html = html.replace(/(<li>.*<\/li>)/g, '<ul>$1</ul>');
+            html = html.replace(/<\/ul><br><ul>/g, '');
+            
+            return html;
+        }
+
+        function showError(message) {
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('error-modal').style.display = 'flex';
+        }
+
+        function closeError() {
+            document.getElementById('error-modal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
